@@ -1,0 +1,35 @@
+main() {
+  semaphore mutex set to 1;
+  unsigned int full = 0;
+  buffer[some range n] = init to all zeroes;
+  unsigned int empty = n;
+  Producer producer[m];
+  Consumer consumer[m];
+
+  while(true) {
+    producer.produce();
+    P(mutex); //mutex dec
+      if(full >= n) {
+        wait();
+      }
+      else {
+        buffer[some slot] = producer.return_item();
+      }
+    V(mutex);
+
+    //consumer
+    P(mutex);
+      if(empty == 0) {
+        wait();
+      }
+      else {
+        consumer.set_item(buffer[some slot]);
+      }
+    V(mutex);
+    consumer.consume();
+  }
+}
+
+Producer { int:item; void:produce(), int:return_item();}
+Consumer { int:item; void:consume(), set_item(int);}
+wait(), signal()?;
