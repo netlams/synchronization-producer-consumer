@@ -1,16 +1,19 @@
+#ifndef _PRODUCER_CONSUMER_H_
+#define _PRODUCER_CONSUMER_H_
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <iostream>
+#include <semaphore.h>
 using namespace std;
-
+// 
 class Producer {
 	int item;
-public:
+	public:
 	Producer();
 	Producer(int x) : item(x) {}
 	void produce();
-	int retItem();
+	int get_item();
 };
 
 Producer::Producer() {
@@ -18,33 +21,36 @@ Producer::Producer() {
 }
 
 void Producer::produce() {
-	item <<= 1;
+	item <<= 1; // basically double
 }
 
-int Producer::retItem() {
+int Producer::get_item() {
 	return item;
 }
-
+// 
 class Consumer{
 	int item;
-public:
+	public:
 	Consumer();
-	Consumer(int x) : item(x) {}
-	void consume(int);
-	int retItem();
+	void consume();
+	void set_item(int);
+	int get_item();
 };
 
 Consumer::Consumer() {
 	item = 0;
 }
 
-void Consumer::consume(int *x) {
-	item = *x;
-	*x >>= 1;
-	item >>= 1;
+void Consumer::consume() {
+	item >>= 1; // basically divide 2
 }
 
-int Consumer::retItem() {
+void Consumer::set_item(int x) {
+	item = x;
+}
+
+int Consumer::get_item() {
 	return item;
 }
 
+#endif
