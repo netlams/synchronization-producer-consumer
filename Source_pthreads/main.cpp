@@ -17,8 +17,8 @@ int main(void) {
 	pthread_mutex_init(&mutex, NULL);
 	sem_init(&empty, 0, BUFF_SIZE);
 	sem_init(&full, 0, 0);
-		cout<< "empty b4: "<<empty << endl;
-		cout<< "full b4: "<<full << endl;
+//		cout<< "empty b4: "<<empty << endl;
+//		cout<< "full b4: "<<full << endl;
 
 	for (int i=0; i<T; i++) {
 		pthread_create(&tid_p[0], NULL, thrd_producing, (void *)i);
@@ -40,13 +40,13 @@ int main(void) {
 void *thrd_producing(void *arg) {
 	// int pos = *((int*)&arg);	
 	Producer p;
-	int i = (int)full;
+	int i = 0;
 	int pos = 0;
 
 	do {
-		cout<< "empty b4: "<<(int)empty << endl;
+		
 		sem_wait(&empty);
-		cout<< "empty af: "<<(int)empty << endl;
+		
 		p.produce();
 		pthread_mutex_lock(&mutex); {
 			// memory[pos] = p.return_item();
@@ -65,13 +65,13 @@ void *thrd_producing(void *arg) {
 void *thrd_consuming(void *arg) {
 	// int pos = *((int*)&arg);	
 	Consumer c;
-	int i = (int)empty;
+	int i = 20;
 	int pos = 0;
 
 	do {
-		// cout<< "full b4: "<<(int)full << endl;
+		
 		sem_wait(&full);
-		// cout<< "full b4: "<<(int)full << endl;
+		
 		pthread_mutex_lock(&mutex); {
 			c.set_item(memory[i]);
 			c.consume(); // chg to 2
