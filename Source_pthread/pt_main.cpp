@@ -51,6 +51,15 @@ void *thrd_producing(void *arg) {
 			fflush(stdout);
 			head = (head+1) % BUFF_SIZE;
 			tail = (tail+1) % BUFF_SIZE;
+			// for (int z = 0; z < BUFF_SIZE; z++)
+			// 				{
+			// 					if(z == head) 
+			// 						cout<< "[*" << memory[z] << "]";
+			// 					else
+			// 						cout<< "[" << memory[z] << "]";		
+			// 				}
+			// 				cout<< endl;
+							
 		}pthread_mutex_unlock(&mutex);
 		sem_post(&full);
 
