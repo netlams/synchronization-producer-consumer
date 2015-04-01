@@ -16,11 +16,13 @@
 #include "pt_main.h"
 
 #define BUFF_SIZE 20
-#define NUM_THRD 1
+#define NUM_THRD 4 //same amount of producer/consumer threads
 
+//prototypes
 void *thrd_producing(void *arg);
 void *thrd_consuming(void *arg);
 
+//global variables
 unsigned int memory[BUFF_SIZE] = {0};
 pthread_mutex_t mutex;
 sem_t empty;
@@ -29,14 +31,15 @@ int head;
 int tail;
 
 int main(void) {
+	//initialization
 	pthread_t tid_p[NUM_THRD], tid_c[NUM_THRD];
 	pthread_mutex_init(&mutex, NULL);
 	sem_init(&empty, 0, BUFF_SIZE);
 	sem_init(&full, 0, 0);
 	head = tail = 0;
-
 	srand (time(NULL));
 
+	//thread creation
 	for (int i=0; i<NUM_THRD; i++) {
 		pthread_create(&tid_p[0], NULL, thrd_producing, NULL);
 		pthread_create(&tid_c[0], NULL, thrd_consuming, NULL);
@@ -46,6 +49,7 @@ int main(void) {
 		pthread_join(tid_c[0], NULL);
 	}
 
+	//termination
 	pthread_mutex_destroy(&mutex);
 	sem_destroy(&empty);
 	sem_destroy(&full);

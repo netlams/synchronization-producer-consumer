@@ -25,7 +25,7 @@
 #include <bitset>
 
 using namespace std;
-//
+//data structure for producer
 class Producer {
 	int item;
 	public:
@@ -34,22 +34,20 @@ class Producer {
 	void produce();
 	int get_item();
 };
-
+//default constructor
 Producer::Producer() {
 	item=1;
 }
-
+//produce an item
 void Producer::produce() {
 	item <<= 1; // basically double
-	// int temp = item;
-	// item<<=1;
-	// item|=temp;
 }
-
+//to return item
 int Producer::get_item() {
 	return item;
 }
-//
+
+//data structure for consumer
 class Consumer{
 	int item;
 	public:
@@ -58,19 +56,19 @@ class Consumer{
 	void set_item(int);
 	int get_item();
 };
-
+//default constructor
 Consumer::Consumer() {
 	item = 0;
 }
-
+//does consumption
 void Consumer::consume() {
 	item >>= 1; // basically divide 2
 }
-
+//extract/withdraw an item
 void Consumer::set_item(int x) {
 	item = x;
 }
-
+//return item
 int Consumer::get_item() {
 	return item;
 }
