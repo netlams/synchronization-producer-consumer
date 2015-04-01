@@ -56,21 +56,21 @@ SharedObject::SharedObject() {
 VOID SharedObject::deposit(int item) {
 	memory[head%BUFFER_SIZE] = item;
 	head = (head+1) % BUFFER_SIZE; //next slot
-	tail = (tail+1) % BUFFER_SIZE;
+	//tail = (tail+1) % BUFFER_SIZE; //n
 }
 
 /* get item from memory */
 int SharedObject::withdraw() {
-	tail = (tail-1) % BUFFER_SIZE; //next slot
-	head = (head-1) % BUFFER_SIZE;
+	//tail = (tail-1) % BUFFER_SIZE; //next slot
+	//head = (head-1) % BUFFER_SIZE;
 	int item = memory[tail]; //fetch item from memory
 	memory[tail]=0; //consumed
+	tail = (tail+1) % BUFFER_SIZE;
 	return item; //return item for consumption
 }
 
 /* output all memory cells */
 VOID SharedObject::showMemoryCells() {
-	char t, h;
 	for (int z = 0; z < BUFFER_SIZE; z++)
 	{
 		cout<< "[" << memory[z] << "]";		
@@ -85,13 +85,13 @@ DWORD WINAPI thrdProducing(LPVOID arg) {
 	int pid = (int)(INT_PTR)arg;
 
 	while(true) {
-		Sleep(rand() % 2500+2000); //sleep timer
-		int item = 1 + pid*pid; //item produced
+		Sleep(rand() % 1500+1000); //sleep timer
+		int item = 1 + pid*pid; //some item produced 
 
 		EnterCriticalSection(&crit_section); //critical section obtained
 
 		//check if all empty slots are full then do block
-		while (sharedobject.getHead()==(BUFFER_SIZE-1)) {
+		while (sharedobject.getHead()==(BUFFER_SIZE) || (sharedobject.getTail()-sharedobject.getHead()==1)) { //
 			SleepConditionVariableCS(&cv_produceble, &crit_section, INFINITE);
 		}
 
@@ -115,17 +115,18 @@ DWORD WINAPI thrdConsuming(PVOID arg)
 	int cid = (int)(INT_PTR)arg;
 
 	while(true) {
-		Sleep(rand() % 2500+2000); //sleep timer
+		Sleep(rand() % 1500+1000); //sleep timer
 		EnterCriticalSection(&crit_section); //critical section obtained
 
 		//check if empty then wait for producer
-		while (sharedobject.getTail()==0){
+		while (sharedobject.getHead()==0 || sharedobject.getHead()==sharedobject.getTail()){
 			SleepConditionVariableCS(&cv_consumeble, &crit_section, INFINITE);
 		}
 		
 		//critical section
+		int prevPos = sharedobject.getTail(); //the position of the memory just going to be consumed
 		int item = sharedobject.withdraw();
-		printf(" -- Consuming . . . [item:%d] at [position:%d] --\n", item, sharedobject.getTail());
+		printf(" -- Consuming . . . [item:%d] at [position:%d] --\n", item, prevPos);
 		sharedobject.myfile<< " -- Consuming . . . [item:" << item << "] from [position:"<< sharedobject.getTail() << "] ++\n"  ;
 		sharedobject.showMemoryCells();
         cout<<endl;//newline
