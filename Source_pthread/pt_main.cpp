@@ -1,3 +1,18 @@
+/////////////////////////////////////////////////////////////////////////* 
+// Filename:		pt_main.cpp 
+// Student Name:	Dau T. Lam
+// Class:			CIS 3207 
+// Instructor:		TA - Dawei Li / Cody Casey
+// Assignment:		Lab 3 - Producer-Consumer Problem using PTHREAD API (Run on Linux!)
+// Date:			03/28/2015
+// 
+// Comments: This program will solve the producer-consumer problem using mutex and semaphores. Multiple threads
+// will be created - one group will be labeled as 'producers' will continously 'produce 
+// an item to be deposited' while the other group labeled as 'consumers' will continously
+// 'withdraw an item for consumption'. 
+// Instructions: to run, compile this file (.cpp) and execute it using Terminal, See instructions.txt
+//////////////////////////////////////////////////////////////////////////*/
+
 #include "pt_main.h"
 
 #define BUFF_SIZE 20
@@ -47,7 +62,7 @@ void *thrd_producing(void *arg) {
 		p.produce();
 		pthread_mutex_lock(&mutex); {
 			memory[head] = p.get_item();
-			printf("Producer's Thread. [pos: %d], [mem: %d]\n", head, memory[head]);
+			printf(" ++ Producing ... at [position: %d], [item: %d] ++\n", head, memory[head]);
 			fflush(stdout);
 			head = (head+1) % BUFF_SIZE;
 			tail = (tail+1) % BUFF_SIZE;
@@ -81,10 +96,10 @@ void *thrd_consuming(void *arg) {
 			head = (head-1) % BUFF_SIZE;
 			c.set_item(memory[tail]);
 			c.consume(); // halve
-		 	printf("Consumer's Thread. [pos: %d], [mem: %d], ", tail, memory[tail]);
+		 	printf(" -- Consuming ... from [position: %d], [item: %d], ", tail, memory[tail]);
 
 			memory[tail] = c.get_item(); // update item in buffer[slot]
-			printf("after [mem: %d]\n", memory[tail]);
+			printf("after [item: %d]\n", memory[tail]);
 			fflush(stdout);
 		}pthread_mutex_unlock(&mutex);
 		sem_post(&empty);

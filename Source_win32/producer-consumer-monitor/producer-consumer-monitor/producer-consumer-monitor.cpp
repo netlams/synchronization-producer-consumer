@@ -1,313 +1,207 @@
+/////////////////////////////////////////////////////////////////////////* 
+// Filename:		producer-consumer-monitor.cpp 
+// Student Name:	Dau T. Lam
+// Class:			CIS 3207 
+// Instructor:		TA - Dawei Li / Cody Casey
+// Assignment:		Lab 3 - Producer-Consumer Problem  using Win32 API (Run on Windows!)
+// Date:			03/29/2015
+// 
+// Comments: This program will solve the producer-consumer problem using critical 
+// section and conditional variables to eliminate any spurious wakeups. Multiple threads
+// will be created - one group will be labeled as 'producers' will continously 'produce 
+// an item to be deposited' while the other group labeled as 'consumers' will continously
+// 'withdraw an item for consumption'. 
+// Instructions: to run, compile this file (.cpp) and execute it using Microsoft Visual Studio
+//////////////////////////////////////////////////////////////////////////*/
+
 #include "stdafx.h"
 using namespace std;
 
-#define NUM_THRD 5 
-#define BUFF_SIZE 10
+#define BUFFER_SIZE 20
+#define NUM_PROD 5 //set how many producer threads
+#define NUM_CONS 3 //set how many consumer threads
 
-HANDLE ghMutex; // handle mutual exclusion
-VOID showMemoryCells(); // need impt
+DWORD WINAPI thrdProducing( LPVOID); //instructions for producer threads 
+DWORD WINAPI thrdConsuming( LPVOID); //instrctions for consumer threads
+CONDITION_VARIABLE cv_consumeble; //used to wake up blocked consumer threads
+CONDITION_VARIABLE cv_produceble; //used to wake up blocked producer threads
+CRITICAL_SECTION crit_section; //used to allow max one thread for mutual exclusion
 
-class SharedObject {
-	public:
-	Monitor* monitor;
+/* data structure to hold shared data */
+class SharedObject { 
+	int head;
+	int tail;
+	DWORD memory[BUFFER_SIZE];
+public:
 	SharedObject();
-	DWORD memory[BUFF_SIZE];
-	DWORD head;
-	DWORD tail;
-}sharedobj;
-
-class Monitor {
-	VOID initialize();
-	CONDITION_VARIABLE ghEmpty;
-	CONDITION_VARIABLE ghFull;
+	ofstream myfile;
 	VOID deposit(int);
-	int retrieve();
-};
-	DWORD WINAPI Thrd_Producing( LPVOID);
-	DWORD WINAPI Thrd_Consuming( LPVOID);
+	int withdraw();
+	int getHead() {return head;}
+	int getTail() {return tail;}
+	VOID showMemoryCells();
+}sharedobject; //object constructor called - initialized
 
-int _tmain(int argc, _TCHAR* argv[])
+/* default constructor */
+SharedObject::SharedObject() { 
+	head = 0; 
+	tail = 0;
+	InitializeConditionVariable(&cv_consumeble);
+	InitializeConditionVariable(&cv_produceble);
+	InitializeCriticalSection(&crit_section);
+	myfile.open ("log.txt");
+}
+
+/* put produced item to memory */
+VOID SharedObject::deposit(int item) {
+	memory[head%BUFFER_SIZE] = item;
+	head = (head+1) % BUFFER_SIZE; //next slot
+	tail = (tail+1) % BUFFER_SIZE;
+}
+
+/* get item from memory */
+int SharedObject::withdraw() {
+	tail = (tail-1) % BUFFER_SIZE; //next slot
+	head = (head-1) % BUFFER_SIZE;
+	int item = memory[tail]; //fetch item from memory
+	memory[tail]=0; //consumed
+	return item; //return item for consumption
+}
+
+/* output all memory cells */
+VOID SharedObject::showMemoryCells() {
+	char t, h;
+	for (int z = 0; z < BUFFER_SIZE; z++)
+	{
+		cout<< "[" << memory[z] << "]";		
+		myfile<<"[" << memory[z] << "]";	
+	}
+	cout << endl;
+	myfile<<"\n";
+}
+
+/* instructions for producer threads */
+DWORD WINAPI thrdProducing(LPVOID arg) {
+	int pid = (int)(INT_PTR)arg;
+
+	while(true) {
+		Sleep(rand() % 2500+2000); //sleep timer
+		int item = 1 + pid*pid; //item produced
+
+		EnterCriticalSection(&crit_section); //critical section obtained
+
+		//check if all empty slots are full then do block
+		while (sharedobject.getHead()==(BUFFER_SIZE-1)) {
+			SleepConditionVariableCS(&cv_produceble, &crit_section, INFINITE);
+		}
+
+		//critical section work
+		printf(" ++ Producing . . . [item:%d] to [position:%d] ++\n", item, sharedobject.getHead());
+		sharedobject.myfile<< " ++ Producing . . . [item:" << item << "] to [position:"<< sharedobject.getHead() << "] ++\n"  ;
+		sharedobject.deposit(item);
+		
+		//remainder section
+		sharedobject.showMemoryCells();
+		cout<<endl; //newline
+		LeaveCriticalSection(&crit_section); //release critical section
+		WakeConditionVariable(&cv_consumeble); //wake up any waiting consumer
+	}
+	return 0;
+}
+
+/* instructions for consumer threads */
+DWORD WINAPI thrdConsuming(PVOID arg)
 {
-	HANDLE pThread[NUM_THRD];
-	HANDLE cThread[NUM_THRD];
-	DWORD ThreadID[NUM_THRD];
+	int cid = (int)(INT_PTR)arg;
+
+	while(true) {
+		Sleep(rand() % 2500+2000); //sleep timer
+		EnterCriticalSection(&crit_section); //critical section obtained
+
+		//check if empty then wait for producer
+		while (sharedobject.getTail()==0){
+			SleepConditionVariableCS(&cv_consumeble, &crit_section, INFINITE);
+		}
+		
+		//critical section
+		int item = sharedobject.withdraw();
+		printf(" -- Consuming . . . [item:%d] at [position:%d] --\n", item, sharedobject.getTail());
+		sharedobject.myfile<< " -- Consuming . . . [item:" << item << "] from [position:"<< sharedobject.getTail() << "] ++\n"  ;
+		sharedobject.showMemoryCells();
+        cout<<endl;//newline
+		//remainder section
+		LeaveCriticalSection(&crit_section);// release crit_section
+		WakeConditionVariable(&cv_produceble);// wake up producer if someone is waiting
+	}
+	return 0;
+}
+
+/* MAIN FUNCTION */
+int main(void)
+{
+	DWORD tid;
+	HANDLE producer[NUM_PROD];
+	HANDLE consumer[NUM_CONS];
 	int *lpArgPtr;
 	
-	sharedobj.monitor = (Monitor*) malloc(sizeof(Monitor));
-	// INITIALIZE
-	//SharedObject ;
-	// Create a ghMutex with no initial owner
-	ghMutex = CreateMutex(
-		NULL,              // default security attributes
-		FALSE,             // initially not owned
-		NULL);             // unnamed ghMutex
-	/*sharedobj.tail = 0;
-	head = 0;*/ // init in constructor
-
-	/*ghEmpty = CreateSemaphore(NULL, BUFF_SIZE, BUFF_SIZE, NULL);
-	ghFull = CreateSemaphore(NULL, 0, BUFF_SIZE, NULL);*/ // using cond var
-	srand (time(NULL));
-/*
-	for (int z = 0; z < BUFF_SIZE; z++)
-	{
-		cout<< "[" << sharedobj.memory[z] << "]";		
-	}
-	cout << endl;*/
-	showMemoryCells();
-
-	if (!ghMutex)
-	{
-		printf("CreateMutex error: %d\n", GetLastError());
-		return 1;
-	} //error getting ghMutex
-	/*if (!ghEmpty || !ghFull == NULL) 
-	{
-		printf("CreateSemaphore error: %d\n", GetLastError());
-		return 1;
-	}*/ // check on these in monitor
-
-	// Create worker threads
-
-	for(int i=0; i < NUM_THRD; i++ )
-	{
+	srand(time(NULL));
+	printf("Starting program... printing all memory cells\n");
+	sharedobject.myfile<<"Starting program... printing all memory cells\n";
+	sharedobject.showMemoryCells();
+	cout<<endl; //newline
+	
+	//initialize producer threads
+	for (int i = 0; i < NUM_PROD; ++i) {
 		lpArgPtr = (int *)malloc(sizeof(int));
 		*lpArgPtr = i;
-		pThread[i] = CreateThread( //obj
-			NULL,       // default security attributes
-			0,          // default stack size
-			(LPTHREAD_START_ROUTINE) Thrd_Producing,
-			lpArgPtr,       // no thread function arguments
-			0,          // default creation flags
-			&ThreadID[i]); // receive thread identifier
-		//printf("Thread %d was created\n",ThreadID[i]);
-
-		cThread[i] = CreateThread( //obj
-			NULL,       // default security attributes
-			0,          // default stack size
-			(LPTHREAD_START_ROUTINE) Thrd_Consuming,
-			lpArgPtr,       // no thread function arguments
-			0,          // default creation flags
-			&ThreadID[i]); // receive thread identifier
-		//printf("Thread %d was created\n",ThreadID[i]);
-
-		if( !pThread[i] || !cThread[i])
+		producer[i] = CreateThread(NULL, 
+									0, 
+									(LPTHREAD_START_ROUTINE) thrdProducing, 
+									(PVOID)i, 
+									0, 
+									&tid);
+		if( !producer[i]) //error getting thread
 		{
 			printf("CreateThread error: %d\n", GetLastError());
 			return 1;
-		}//error getting thrd
-	} //rof
-
-	// Wait for all threads to terminate
-
-	WaitForMultipleObjects(NUM_THRD, 
-		pThread,
-		TRUE, 
-		INFINITE);
-	WaitForMultipleObjects(NUM_THRD, 
-		cThread,
-		TRUE, 
-		INFINITE);
-
-	// Close thread and ghMutex handles
-
-	for(int j=0; j < NUM_THRD; j++ )
-	{
-		CloseHandle(pThread[j]);
-		CloseHandle(cThread[j]);
-	}
-	CloseHandle(ghMutex);
-	//CloseHandle(ghEmpty);
-	//CloseHandle(ghFull);
-	showMemoryCells();
-
-	return 0;
-}
-//////////
-DWORD WINAPI Thrd_Producing ( LPVOID lpParam )
-{
-	int id, item;
-	id = *(int *)lpParam;
-	DWORD dwWaitResult;
-	
-	while( true )
-	{
-		//dwWaitResult = WaitForSingleObject( 
-		//	ghEmpty,   // handle to semaphore
-		//	INFINITE);           // zero-second time-out interval
-
-		//switch (dwWaitResult)
-		//{
-		//	// The thread got ownership of the ghMutex
-		//	case WAIT_OBJECT_0: 
-		//		// Request ownership of ghMutex.
-		//		dwWaitResult = WaitForSingleObject(
-		//			ghMutex,    // handle to ghMutex
-		//			INFINITE);  // no time-out interval
-		//		switch (dwWaitResult)
-		//		{
-		//			// The thread got ownership of the ghMutex
-		//			case WAIT_OBJECT_0:
-		//				__try {
-		//					memory[head] = 1;
-
-		//					printf(" +[%d] producing [pos: %d]+\n ", a, head);
-		//					for (int z = 0; z < BUFF_SIZE; z++)
-		//					{
-		//						if(z == head) 
-		//							cout<< "[*" << memory[z] << "]";
-		//						else
-		//							cout<< "[" << memory[z] << "]";		
-		//					}
-		//					cout << endl;
-
-		//					fflush(stdout);
-		//					head = (head+1) % BUFF_SIZE;
-		//					tail = (tail+1) % BUFF_SIZE;
-		//					
-		//				}
-
-		//			__finally {
-		//			// Release ownership of the ghMutex object
-		//				if (! ReleaseMutex(ghMutex))
-		//				{
-		//				// Handle error.
-		//				}
-		//			}
-		//			break;
-
-		//		// The thread got ownership of an abandoned ghMutex
-		//		// The database is in an indeterminate state
-		//		case WAIT_ABANDONED:
-		//			return FALSE;
-		//		}
-
-  //              // Simulate thread spending time on task
-  //             // Sleep(10);
-
-  //              // Release the semaphore when task is finished
-  //              if (!ReleaseSemaphore( 
-  //                      ghFull,		// handle to semaphore
-  //                      1,            // increase count by one
-  //                      NULL) )       // not interested in previous count
-  //              {
-  //                  printf("ReleaseSemaphore error: %d\n", GetLastError());
-  //              }
-  //              break; 
-		//case WAIT_TIMEOUT: 
-  //              printf("Thread %d: wait timed out\n", GetCurrentThreadId());
-  //              break; 
-		//}
-		item = 0; //produce
-		//sharedobj.monitor->deposit(item);
-
-		WaitForSingleObject(&empty,INFINITE);
-                 EnterCriticalSection(&cs);
-
-		sharedobj.head = (sharedobj.head+1) % BUFF_SIZE;
-		sharedobj.tail = (sharedobj.tail+1) % BUFF_SIZE;
-
-		Sleep(rand() % 2000 + 1000);
-
-	}
-		return TRUE;
-}
-
-DWORD WINAPI Thrd_Consuming ( LPVOID lpParam )
-{
-	// lpParam not used in this example
-	//UNREFERENCED_PARAMETER(lpParam);
-	int a;
-	a = *(int *)lpParam;
-	//printf("\n[%d] Consumer \n", a);
-	DWORD dwWaitResult;
-	int cnt = 0;
-
-	while( cnt < 8 )
-	{
-		// Request ownership of ghMutex.
-		//dwWaitResult = WaitForSingleObject(
-		//	ghMutex,    // handle to ghMutex
-		//	INFINITE);  // no time-out interval
-		cnt++;
-		dwWaitResult = WaitForSingleObject( 
-			ghFull,   // handle to semaphore
-			INFINITE);           // zero-second time-out interval
-
-		switch (dwWaitResult)
-		{
-			// The thread got ownership of the ghMutex
-			case WAIT_OBJECT_0:
-				// Request ownership of ghMutex.
-				dwWaitResult = WaitForSingleObject(
-					ghMutex,    // handle to ghMutex
-					INFINITE);  // no time-out interval
-				switch (dwWaitResult)
-				{
-					// The thread got ownership of the ghMutex
-					case WAIT_OBJECT_0:
-						__try {
-							head = (head-1) % BUFF_SIZE;
-							tail = (tail-1) % BUFF_SIZE;
-							memory[tail] = 0;
-
-							printf(" --[%d] consuming [pos:%d]-- \n ", a, tail);
-							fflush(stdout);
-
-							for (int z = 0; z < BUFF_SIZE; z++)
-							{
-								if(z == head) 
-									cout<< "[*" << memory[z] << "]";
-								else
-									cout<< "[" << memory[z] << "]";		
-							}
-							cout<< endl;
-							
-						}
-
-					__finally {
-					// Release ownership of the ghMutex object
-						if (! ReleaseMutex(ghMutex))
-						{
-						// Handle error.
-						}
-					}
-					break;
-
-				// The thread got ownership of an abandoned ghMutex
-				// The database is in an indeterminate state
-				case WAIT_ABANDONED:
-					return FALSE;
-				}
-
-                // Simulate thread spending time on task
-                //Sleep(10);
-
-                // Release the semaphore when task is finished
-                if (!ReleaseSemaphore( 
-                        ghEmpty,		// handle to semaphore
-                        1,            // increase count by one
-                        NULL) )       // not interested in previous count
-                {
-                    printf("ReleaseSemaphore error: %d\n", GetLastError());
-                }
-                break; 
-		case WAIT_TIMEOUT: 
-                printf("Thread %d: wait timed out\n", GetCurrentThreadId());
-                break; 
 		}
-		Sleep(rand() % 2000 + 1000);
-
 	}
-		return TRUE;
-}
-
-VOID showMemoryCells() {
-}
-
-VOID Monitor::deposit(int item) {
 	
+	//initialize consumer threads
+	for (int j = 0; j < NUM_CONS; ++j) {
+		lpArgPtr = (int *)malloc(sizeof(int));
+		*lpArgPtr = j;
+		consumer[j]= CreateThread(NULL, 
+									0, 
+									(LPTHREAD_START_ROUTINE) thrdConsuming, 
+									(PVOID)j, 
+									0, 
+									&tid);
+		if( !consumer[j]) //error getting thread
+		{
+			printf("CreateThread error: %d\n", GetLastError());
+			return 1;
+		}
+	}
+	
+	//wait for all threads to finish
+	WaitForMultipleObjects(NUM_PROD, producer, TRUE, INFINITE);        
+	WaitForMultipleObjects(NUM_CONS, consumer, TRUE, INFINITE);
+
+	for(int i=0; i < NUM_PROD; ++i )
+	{
+		CloseHandle(producer[i]);
+	}
+	for(int j=0; j < NUM_CONS; ++j )
+	{
+		CloseHandle(consumer[j]);
+	}
+
+	DeleteCriticalSection(&crit_section);
+	sharedobject.myfile.close();
+	printf("\nProducer & Consumer all finish!");
+
+	return EXIT_SUCCESS;
 }
 
-int Monitor::retrieve() {
-	return ;
-}
+
