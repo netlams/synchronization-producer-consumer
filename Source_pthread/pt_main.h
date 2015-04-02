@@ -1,15 +1,15 @@
-/////////////////////////////////////////////////////////////////////////* 
-// Filename:		pt_main.h 
+/////////////////////////////////////////////////////////////////////////*
+// Filename:		pt_main.h
 // Student Name:	Dau T. Lam
-// Class:			CIS 3207 
+// Class:			CIS 3207
 // Instructor:		TA - Dawei Li / Cody Casey
 // Assignment:		Lab 3 - Producer-Consumer Problem using PTHREAD API (Run on Linux!)
 // Date:			03/28/2015
-// 
+//
 // Comments: This program will solve the producer-consumer problem using mutex and semaphores. Multiple threads
-// will be created - one group will be labeled as 'producers' will continously 'produce 
+// will be created - one group will be labeled as 'producers' will continously 'produce
 // an item to be deposited' while the other group labeled as 'consumers' will continously
-// 'withdraw an item for consumption'. 
+// 'withdraw an item for consumption'.
 // Instructions: to run, compile main function file (.cpp) and execute it using Terminal, See instructions.txt
 //////////////////////////////////////////////////////////////////////////*/
 
@@ -22,7 +22,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
-#include <bitset>
+#include <fstream>
 
 using namespace std;
 //data structure for producer
@@ -46,7 +46,6 @@ void Producer::produce() {
 int Producer::get_item() {
 	return item;
 }
-
 //data structure for consumer
 class Consumer{
 	int item;
@@ -72,5 +71,7 @@ void Consumer::set_item(int x) {
 int Consumer::get_item() {
 	return item;
 }
+//output all memory cells
+void showMemoryCells(int pos);
 
 #endif
