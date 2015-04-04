@@ -16,13 +16,11 @@
 
 <h2>Usage: </h2>
 Part 1- Pthread
-1. Must be compiled/executed on a Linux OS. GNU++ must be installed.
-2. Using the Terminal, type "g++ -o main main.cpp -lpthread" 
-*remove the quotes*
-3. In the same directory, execute the binary file "main". You could type "./main"
-*again remove the quotes*
-4. The program will run on the Terminal, to stop running press CRTL+C
+<ol><li>Must be compiled/executed on a Linux OS. GNU++ must be installed.</li>
+<li>Using the Terminal, type "g++ -o main main.cpp -lpthread" *remove the quotes*</li>
+<li>In the same directory, execute the binary file "main". You could type "./main" *again remove the quotes*</li>
+<li>The program will run on the Terminal, to stop running press CRTL+C</li></ol>
 Part 2 - Win32
-1. Open the solution file.
-2. Build and run it in MS Visual Studio (2012)
+<ol><li>Open the solution file.</li>
+<li>Build and run it in MS Visual Studio (2012).</li></ol>
 
