@@ -1,4 +1,6 @@
 # synchronization-producer-consumer
+<h1>Language written in: </h1>C++
+<h1>Compilation Platform: <h1>Linux Terminal G++ for pthread API, Windows Visual Studio 2012 for Win32 API
  Implementing a solution to the producer-consumer problem (multiple producers and multiple consumers) using synchronization of concurrent threads.
 <p>
   In this laboratory project I want to build solutions to the classic producer-consumer problem – also known as the bounded-buffer problem. Essentially this problem deals with situations where there are a number of producers and a number of consumers. These entities are assigned instructions to perform individually but would require accessing the shared buffer queue between all them. Producer theads are each to 'produce' an item (whatever the item is doesn't matter) and then deposit it into the an avaiable slot/cell in the memory buffer. Consumer threads each would access a slot/cell and 'consume' the item. 
