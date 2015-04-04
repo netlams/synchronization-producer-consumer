@@ -1,5 +1,5 @@
-﻿Build started 4/1/2015 2:50:06 PM.
-     1>Project "E:\My Shared Documents\Temple 2015\cis 3207\Lam_lab3\mutex-producer-consumer\Source_win32\producer-consumer-monitor\producer-consumer-monitor\producer-consumer-monitor.vcxproj" on node 2 (Build target(s)).
+﻿Build started 4/2/2015 11:06:14 PM.
+     1>Project "E:\My Shared Documents\Temple 2015\cis 3207\Lam_lab3\mutex-producer-consumer\Source_win32\producer-consumer-monitor\producer-consumer-monitor\producer-consumer-monitor.vcxproj" on node 2 (Rebuild target(s)).
      1>InitializeBuildStatus:
          Creating "Debug\producer-consumer-monitor.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
@@ -15,8 +15,8 @@
        FinalizeBuildStatus:
          Deleting file "Debug\producer-consumer-monitor.unsuccessfulbuild".
          Touching "Debug\producer-consumer-monitor.lastbuildstate".
-     1>Done Building Project "E:\My Shared Documents\Temple 2015\cis 3207\Lam_lab3\mutex-producer-consumer\Source_win32\producer-consumer-monitor\producer-consumer-monitor\producer-consumer-monitor.vcxproj" (Build target(s)).
+     1>Done Building Project "E:\My Shared Documents\Temple 2015\cis 3207\Lam_lab3\mutex-producer-consumer\Source_win32\producer-consumer-monitor\producer-consumer-monitor\producer-consumer-monitor.vcxproj" (Rebuild target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:06.43
+Time Elapsed 00:00:06.67

@@ -49,12 +49,12 @@ int main(void) {
 
 	//thread creation
 	for (int i=0; i<NUM_THRD; i++) {
-		pthread_create(&tid_p[0], NULL, thrd_producing, NULL);
-		pthread_create(&tid_c[0], NULL, thrd_consuming, NULL);
+		pthread_create(&tid_p[i], NULL, thrd_producing, NULL);
+		pthread_create(&tid_c[i], NULL, thrd_consuming, NULL);
 	}
 	for (int i=0; i<NUM_THRD; i++) {
-		pthread_join(tid_p[0], NULL);
-		pthread_join(tid_c[0], NULL);
+		pthread_join(tid_p[i], NULL);
+		pthread_join(tid_c[i], NULL);
 	}
 
 	//termination
