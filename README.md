@@ -26,3 +26,4 @@ Part 2 - Win32
 
 <h2>Demo: </h2>
 <img src="https://github.com/netlams/synchronization-producer-consumer/blob/master/Source_win32/producer-consumer-monitor/producer-consumer-monitor/Screenshots/resultdata1.JPG"/>
+<img src="https://github.com/netlams/synchronization-producer-consumer/blob/master/Source_win32/producer-consumer-monitor/producer-consumer-monitor/Screenshots/resultdata2.JPG" />
