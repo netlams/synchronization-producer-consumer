@@ -24,3 +24,5 @@ Part 2 - Win32
 <ol><li>Open the solution file.</li>
 <li>Build and run it in MS Visual Studio (2012).</li></ol>
 
+<h2>Demo: </h2>
+<img src="https://github.com/netlams/synchronization-producer-consumer/blob/master/Source_win32/producer-consumer-monitor/producer-consumer-monitor/Screenshots/resultdata1.JPG"/>
